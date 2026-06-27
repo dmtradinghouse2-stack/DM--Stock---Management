@@ -696,7 +696,7 @@ async function submitStockMovement(){
         reference: reference || (mode==='IN'? party : party),
         note: note + (party? (note?' | ':'')+(mode==='IN'?'Supplier: ':'Issued to: ')+party : '')
       };
-      const res = await fetch(WEBHOOK_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const res = await fetch(WEBHOOK_URL + '?payload=' + encodeURIComponent(JSON.stringify(payload)));
       const result = await res.json();
       if(result.error) throw new Error(result.error);
 
@@ -802,7 +802,7 @@ async function saveThreshold(){
   stockLevels[code] = {...cur, threshold:val};
 
   try{
-    await fetch(WEBHOOK_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'setthreshold', code, threshold:val})});
+    await fetch(WEBHOOK_URL + '?payload=' + encodeURIComponent(JSON.stringify({action:'setthreshold', code, threshold:val})));
   }catch(e){ /* optimistic update already applied locally */ }
 
   closeThresholdModal();
