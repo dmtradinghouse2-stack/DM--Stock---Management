@@ -807,6 +807,49 @@ async function saveThreshold(){
   renderStockLevels();
 }
 
+// ───────────────────────── History view ─────────────────────────
+
+function renderHistory(){
+  const body = document.getElementById('history-body');
+  if(!body) return;
+
+  const search   = (document.getElementById('history-search')   ? document.getElementById('history-search').value.trim().toLowerCase()   : '');
+  const typeF    = (document.getElementById('history-type-filter') ? document.getElementById('history-type-filter').value : '');
+  const catF     = (document.getElementById('history-cat-filter')  ? document.getElementById('history-cat-filter').value  : '');
+
+  let rows = movements.slice(); // already newest-first from load
+
+  if(search) rows = rows.filter(r =>
+    String(r.Code||'').toLowerCase().includes(search) ||
+    String(r.ProductName||'').toLowerCase().includes(search) ||
+    String(r.Reference||'').toLowerCase().includes(search)
+  );
+  if(typeF) rows = rows.filter(r => String(r.Type||'') === typeF);
+  if(catF)  rows = rows.filter(r => String(r.Category||'') === catF);
+
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="9" class="empty-msg">No movements found.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.slice(0, 200).map(r => {
+    const isIn  = String(r.Type||'').toUpperCase()==='IN';
+    const color = isIn ? 'var(--ok)' : 'var(--cone)';
+    const total = Number(r.TotalValue)||0;
+    return `<tr>
+      <td>${formatDate(r.Date||r.Timestamp)}</td>
+      <td><strong style="color:#c8a951">${r.Code||'—'}</strong></td>
+      <td>${r.ProductName||'—'}</td>
+      <td>${r.Category||'—'}</td>
+      <td style="font-weight:700;color:${color}">${isIn?'▲ IN':'▼ OUT'}</td>
+      <td style="text-align:right;font-weight:600">${Number(r.Qty)||0}</td>
+      <td style="text-align:right">LKR ${Number(r.UnitCost||0).toFixed(2)}</td>
+      <td style="text-align:right">LKR ${total.toFixed(2)}</td>
+      <td>${r.Reference||r.Note||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
 // ───────────────────────── Data loading ─────────────────────────
 
 function formatDate(d){
@@ -841,6 +884,7 @@ async function refreshAllData(){
     });
 
     renderStockLevels();
+    renderHistory();
   }catch(e){
     console.error('Failed to load data', e);
     document.getElementById('alerts-list').innerHTML =
